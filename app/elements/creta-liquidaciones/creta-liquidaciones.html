@@ -1,0 +1,442 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+
+<dom-module id="creta-liquidaciones">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <h1>Generar Excel desde ficheros CRETA.</h1>
+    <template is="dom-repeat" items="{{fileList}}">
+      <div># <span>{{item.name}}</span></div>
+    </template>
+    <p>
+      <paper-input-container>
+        <input multiple
+          type="file"
+          files="{{fichero::change}}">
+        </input>
+        <paper-button raised on-tap="parseFiles">Cargar ficheros</paper-button>
+      </paper-input-container>
+      <paper-progress value="{{progressValue}}" min="0" max="{{maxRows}}"></paper-progress>
+    </p>
+    <p>
+      <paper-card><paper-button disabled="{{!canDownload}}" raised on-tap="downloadFile">Descargar</paper-button></paper-card>
+    </p>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    function Workbook() {
+      if(!(this instanceof Workbook)) return new Workbook();
+      this.SheetNames = [];
+      this.Sheets = {};
+    }
+
+    Polymer({
+      is: 'creta-liquidaciones',
+
+      fileList : [],
+
+      properties : {
+        fichero : {
+          type : Object,
+          notify : true,
+          observer: 'ficheroChanged'
+        }
+      },
+
+      ready : function(){
+        this.fileList = [];
+        this.fichero = null;
+        this.canDownload = false;
+      },
+
+      ficheroChanged : function(newValue, oldValue){
+        if(newValue){
+          this.fichero = null;
+          this.fileList = [];
+          for(var f=0; f<newValue.length; f++){
+            this.push( 'fileList', newValue[f]);
+          };
+          this.canDownload = false;
+        }
+      },
+
+      workbook : null,
+
+      sheetRange : null,
+
+      conceptos : [
+        'c200' ,
+        'c300' ,
+        'c500' ,
+        'c501' ,
+        'c502' ,
+        'c503' ,
+        'c509' ,
+        'c524' ,
+        'c528' ,
+        'c531' ,
+        'c535' ,
+        'c536' ,
+        'c537' ,
+        'c551' ,
+        'c552' ,
+        'c563' ,
+        'c571' ,
+        'c580'  ,
+        'c586'  ,
+        'c587'  ,
+        'c588'  ,
+        'c589'  ,
+        'c594'  ,
+        'c595'  ,
+        'c596'  ,
+        'c598'  ,
+        'c601'  ,
+        'c603'  ,
+        'c611'  ,
+        'c613'  ,
+        'c634'  ,
+        'c635'   ,
+        'c636'  ,
+        'c637'   ,
+        'c663'   ,
+        'c698'   ,
+        'c700'   ,
+        'c701'   ,
+        'c702'   ,
+        'c703'   ,
+        'c705'   ,
+        'c706'   ,
+        'c707'   ,
+        'c708'   ,
+        'c709'   ,
+        'c710'   ,
+        'c711'  ,
+        'c712'   ,
+        'c713'   ,
+        'c735'   ,
+        'c736'   ,
+        'c737'   ,
+        'c760'   ,
+        'c763'   ,
+        'c764'   ,
+        'c765'   ,
+        'c766'   ,
+        'c767'   ,
+        'c798'   ,
+        'c800'   ,
+        'c998'   ,
+      ],
+
+      prepareWokbook : function(){
+
+        this.workbook = new Workbook();
+        this.sheetRange = {
+          s:{c:0,r:0},
+          e:{c:0,r:1}
+        };
+
+        var ws = {};
+
+        var headers = [
+          'File','Autorizado','RefExt','Regimen','Provincia','Numero','Desde','Hasta',
+          'Tipo','Presentacion','Liquidacion','Estado','UltimoCalculo','Naf','TramoDesde','TramoHasta','Dias'
+        ];
+
+        for(var h in headers){
+          var cell = {
+            v: headers[h],
+            t: 's'
+          };
+          var cell_ref = XLSX.utils.encode_cell({c:h,r:0});
+          ws[cell_ref] = cell;
+        }
+        h++;
+        for(var c in this.conceptos){
+          var cell, cell_ref;
+
+          cell = {v: 'Codigo '+this.conceptos[c], t: 's'};
+          cell_ref = XLSX.utils.encode_cell({c:h++,r:0});
+          ws[cell_ref] = cell;
+
+          cell = {v: 'Base', t: 's'};
+          cell_ref = XLSX.utils.encode_cell({c:h++,r:0});
+          ws[cell_ref] = cell;
+
+          cell = {v: 'Cuota Trabajado', t: 's'};
+          cell_ref = XLSX.utils.encode_cell({c:h++,r:0});
+          ws[cell_ref] = cell;
+
+          cell = {v: 'Cuota Empresa', t: 's'};
+          cell_ref = XLSX.utils.encode_cell({c:h++,r:0});
+          ws[cell_ref] = cell;
+
+          cell = {v: 'Cuota Total', t: 's'};
+          cell_ref = XLSX.utils.encode_cell({c:h++,r:0});
+          ws[cell_ref] = cell;
+
+          h++;
+        }
+
+        this.sheetRange.e.c = h;
+
+        this.workbook.SheetNames.push('Liquidaciones')
+        this.workbook.Sheets['Liquidaciones'] = ws;
+      },
+
+      downloadFile : function(){
+        if( !this.workbook ){
+          return this.nohayFicheros();
+        }
+
+        var ws = this.workbook.Sheets['Liquidaciones'];
+        ws['!ref'] = XLSX.utils.encode_range(this.sheetRange);
+
+        var wopts = { bookType:'xlsx', bookSST:true, type:'binary' };
+        var wbout = XLSX.write(this.workbook,wopts);
+
+        function s2ab(s) {
+          var buf = new ArrayBuffer(s.length);
+          var view = new Uint8Array(buf);
+          for (var i=0; i!=s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+          return buf;
+        }
+
+        /* the saveAs call downloads a file on the local machine */
+        saveAs(new Blob([s2ab(wbout)],{type:"application/xlsx"}), "Liquidaciones.xlsx")
+      },
+
+      parseFiles : function(){
+        var me = this;
+        me.prepareWokbook();
+        setTimeout(function(){
+          me.nextFile()
+        },10);
+      },
+
+      nextFile : function(){
+        var me = this;
+        if( me.fileList.length === 0 ){
+          this.canDownload = true;
+          return;
+        }
+        me.current = me.pop('fileList')
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var data = e.target.result;
+          try{
+            var xml = new window.DOMParser().parseFromString(data,"text/xml");
+            me.backgroundTask(xml.documentElement)
+            setTimeout(function(){
+              me.nextFile()
+            },10);
+          }catch(e){
+            console.log(e)
+            me.ficheroInvalido()
+          }
+        };
+        reader.readAsBinaryString(me.current);
+      },
+
+      ficheroInvalido : function(){
+        app.$.toast.text = 'El fichero ' + this.current.name+' es invalido';
+        app.$.toast.show();
+      },
+
+      nohayFicheros: function(){
+        app.$.toast.text = 'Debe cargar algun fichero primero';
+        app.$.toast.show();
+      },
+
+      backgroundTask : function( xml ){
+        var cell, cell_ref, c, tmp;
+        var ws = this.workbook.Sheets['Liquidaciones'];
+
+        var autorizado = xml.getElementsByTagName('Autorizado')[0]
+        if( ! autorizado ){
+          return this.ficheroInvalido();
+        }
+        var refExterna = xml.getElementsByTagName('ReferenciaExterna')[0]
+        if( ! refExterna ){
+          return this.ficheroInvalido();
+        }
+        var liq = xml.getElementsByTagName('Liquidacion')[0]
+        if( ! liq){
+          return this.ficheroInvalido();
+        }
+
+        var desde = liq.getElementsByTagName('PeriodoDesde')[0];
+        var hasta = liq.getElementsByTagName('PeriodoHasta')[0];
+        var tipo = liq.getElementsByTagName('Tipo')[0];
+        var presentacion = liq.getElementsByTagName('PeriodoPresentacion')[0];
+        var numLiq = liq.getElementsByTagName('NumeroLiquidacion')[0];
+        var estado = liq.getElementsByTagName('Estado')[0];
+        var fechaUltimoCalculo = liq.getElementsByTagName('FechaUltimoCalculo')[0];
+        var horaUltimoCalculo = liq.getElementsByTagName('HoraUltimoCalculo')[0];
+
+        var ccc = liq.getElementsByTagName('Ccc')[0];
+        var regimen = ccc.getElementsByTagName('Regimen')[0];
+        var provincia = ccc.getElementsByTagName('Provincia')[0];
+        var numero = ccc.getElementsByTagName('Numero')[0];
+
+        var trabajadores = liq.getElementsByTagName('Trabajadores')[0].getElementsByTagName('Trabajador')
+        for( var t=0; t<trabajadores.length; t++){
+            var trb = trabajadores[t];
+
+            var naf = trb.getElementsByTagName('Naf')[0];
+
+            var tramos = trb.getElementsByTagName('Tramos')[0].getElementsByTagName('Tramo')
+            for( var m=0; m<tramos.length; m++){
+              var tramo = tramos[m];
+
+              c = 0;
+              cell = {v: this.current.name, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              cell = {v: autorizado.innerHTML, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              cell = {v: refExterna.innerHTML, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              cell = {v: regimen.innerHTML, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              cell = {v: provincia.innerHTML, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              cell = {v: numero.innerHTML, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              tmp = desde.getElementsByTagName('Mes')[0].innerHTML+'/'+
+                desde.getElementsByTagName('Anho')[0].innerHTML;
+              cell = {v: tmp, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              tmp = hasta.getElementsByTagName('Mes')[0].innerHTML+'/'+
+                hasta.getElementsByTagName('Anho')[0].innerHTML;
+              cell = {v: tmp, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              cell = {v: tipo.innerHTML, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              tmp = presentacion.getElementsByTagName('Mes')[0].innerHTML+'/'+
+                presentacion.getElementsByTagName('Anho')[0].innerHTML;
+              cell = {v: tmp, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              cell = {v: numLiq.innerHTML, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              cell = {v: estado.innerHTML, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              tmp = fechaUltimoCalculo.getElementsByTagName('Dia')[0].innerHTML+'/'+
+                fechaUltimoCalculo.getElementsByTagName('Mes')[0].innerHTML+'/'+
+                fechaUltimoCalculo.getElementsByTagName('Anho')[0].innerHTML+' '+
+                horaUltimoCalculo.innerHTML.substring(0,2)+':'+
+                horaUltimoCalculo.innerHTML.substring(2,2)+':'+
+                horaUltimoCalculo.innerHTML.substring(4,2);
+              cell = {v: tmp, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              cell = {v: naf.innerHTML, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+
+              var tramoDesde = liq.getElementsByTagName('FechaDesde')[0];
+              var tramoHasta = liq.getElementsByTagName('FechaHasta')[0];
+              var dias = liq.getElementsByTagName('DiasCotizados')[0];
+
+              tmp = tramoDesde.getElementsByTagName('Dia')[0].innerHTML+'/'+
+                tramoDesde.getElementsByTagName('Mes')[0].innerHTML+'/'+
+                tramoDesde.getElementsByTagName('Anho')[0].innerHTML;
+              cell = {v: tmp, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              tmp = tramoHasta.getElementsByTagName('Dia')[0].innerHTML+'/'+
+                tramoHasta.getElementsByTagName('Mes')[0].innerHTML+'/'+
+                tramoHasta.getElementsByTagName('Anho')[0].innerHTML;
+              cell = {v: tmp, t: 's'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              cell = {v: dias.innerHTML, t: 'n'};
+              cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
+              ws[cell_ref] = cell;
+
+              var calculosTramos = tramo.getElementsByTagName('CalculosTramo')
+              for( var ct=0; ct<calculosTramos.length; ct++){
+                var datos = calculosTramos[ct].getElementsByTagName('DatoCalculado');
+                for(var d=0; d<datos.length; d++){
+                  var dato = datos[d];
+                  var datoCodigo = dato.getElementsByTagName('Codigo')[0].innerHTML
+                  var datoValorBase = dato.getElementsByTagName('ValorBase')[0].innerHTML
+                  var datoValorTrabajador= dato.getElementsByTagName('ValorCuotaTrabajador')[0].innerHTML
+                  var datoValorEmpresa = dato.getElementsByTagName('ValorCuotaEmpresarial')[0].innerHTML
+                  var datoValorTotal = dato.getElementsByTagName('ValorCuotaTotal')[0].innerHTML
+
+                  var index = this.conceptos.indexOf('c'+datoCodigo);
+                  if( index ){
+                    cell = {v: datoCodigo, t: 'n'};
+                    cell_ref = XLSX.utils.encode_cell({c:c+((index*6)+0),r:this.sheetRange.e.r});
+                    ws[cell_ref] = cell;
+                    cell = {v: datoValorBase, t: 'n'};
+                    cell_ref = XLSX.utils.encode_cell({c:c+((index*6)+1),r:this.sheetRange.e.r});
+                    ws[cell_ref] = cell;
+                    cell = {v: datoValorTrabajador, t: 'n'};
+                    cell_ref = XLSX.utils.encode_cell({c:c+((index*6)+2),r:this.sheetRange.e.r});
+                    ws[cell_ref] = cell;
+                    cell = {v: datoValorEmpresa, t: 'n'};
+                    cell_ref = XLSX.utils.encode_cell({c:c+((index*6)+3),r:this.sheetRange.e.r});
+                    ws[cell_ref] = cell;
+                    cell = {v: datoValorTotal, t: 'n'};
+                    cell_ref = XLSX.utils.encode_cell({c:c+((index*6)+4),r:this.sheetRange.e.r});
+                    ws[cell_ref] = cell;
+                  }
+                }
+              }
+
+            }
+
+
+            this.sheetRange.e.r++;
+        }
+      }
+
+    });
+  })();
+  </script>
+</dom-module>
