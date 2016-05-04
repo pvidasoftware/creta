@@ -19821,6 +19821,11 @@ module.exports = Array.isArray || function (arr) {
         return str;
       },
 
+      formatAgno: function( n ){
+        var ret = parseInt(n);
+        return ''+(ret < 2000 ? 2000+ret : ret);
+      },
+
       nextRow : function(){
         var me = this;
         var data;
@@ -19866,7 +19871,7 @@ module.exports = Array.isArray || function (arr) {
         mes = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Mes')
         mes.appendChild( document.createTextNode( me.formatInt(data[1],2) ) )
         agno = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Anho')
-        agno.appendChild( document.createTextNode( me.formatInt(data[2]), 4) )
+        agno.appendChild( document.createTextNode( me.formatAgno(data[2]) ) )
 
         periodo = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'PeriodoDesde')
         periodo.appendChild(mes)
@@ -19877,7 +19882,7 @@ module.exports = Array.isArray || function (arr) {
         mes = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Mes')
         mes.appendChild( document.createTextNode( me.formatInt(data[1],2) ) )
         agno = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Anho')
-        agno.appendChild( document.createTextNode( me.formatInt(data[2]),4) )
+        agno.appendChild( document.createTextNode( me.formatAgno(data[2]) ) )
 
         periodo = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'PeriodoHasta')
         periodo.appendChild(mes)
@@ -19899,7 +19904,7 @@ module.exports = Array.isArray || function (arr) {
             mes = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Mes')
             mes.appendChild( document.createTextNode( me.formatInt(data[1],2) ) )
             agno = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Anho')
-            agno.appendChild( document.createTextNode( me.formatInt(data[2]),4 ) )
+            agno.appendChild( document.createTextNode( me.formatAgno(data[2]) ) )
 
             periodo = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'PeriodoControl')
             periodo.appendChild(mes)
@@ -19909,11 +19914,10 @@ module.exports = Array.isArray || function (arr) {
         }
 
         data= me.worksheet[ 'D'+me.rowIndex ].w.split('/');
-        console.log(me.worksheet[ 'D'+me.rowIndex ].w)
         mes = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Mes')
         mes.appendChild( document.createTextNode( me.formatInt(data[1],2) ) )
         agno = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Anho')
-        agno.appendChild( document.createTextNode( me.formatInt(data[2]),4 ) )
+        agno.appendChild( document.createTextNode( me.formatAgno(data[2]) ) )
 
         periodo = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'PeriodoPresentacion')
         periodo.appendChild(mes)
