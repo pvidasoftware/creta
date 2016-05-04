@@ -206,7 +206,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             agno = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Anho')
             agno.appendChild( document.createTextNode( me.formatAgno(data[2]) ) )
 
-            periodo = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'PeriodoControl')
+            periodo = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'FechaControl')
             periodo.appendChild(mes)
             periodo.appendChild(agno)
             row.appendChild(periodo)
@@ -225,7 +225,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         row.appendChild(periodo)
 
 
-        indicador = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Indicador')
+        indicador = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'IndicadorCalculosDesglosados')
         if( me.worksheet['F'+me.rowIndex] ){
           indicador .appendChild( document.createTextNode( me.worksheet['F'+me.rowIndex].w ) )
         }else{
