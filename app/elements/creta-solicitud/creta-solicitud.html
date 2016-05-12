@@ -59,7 +59,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var reader = new FileReader();
           reader.onload = function(e) {
             var data = e.target.result;
-            var workbook = XLSX.read(data, {type: 'binary', cellDates: true});
+            var workbook = XLSX.read(data, {type: 'binary'});
             me.backgroundTask(workbook);
           };
           reader.readAsBinaryString(me.ficheroSolicitud );
@@ -168,8 +168,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         row.appendChild(ccc)
 
         data= me.worksheet[ 'B'+me.rowIndex ].w.split('/');
+        console.log(me.worksheet[ 'B'+me.rowIndex ])
         mes = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Mes')
-        mes.appendChild( document.createTextNode( me.formatInt(data[1],2) ) )
+        mes.appendChild( document.createTextNode( me.formatInt(data[0],2) ) )
         agno = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Anho')
         agno.appendChild( document.createTextNode( me.formatAgno(data[2]) ) )
 
@@ -180,7 +181,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         data= me.worksheet[ 'C'+me.rowIndex ].w.split('/');
         mes = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Mes')
-        mes.appendChild( document.createTextNode( me.formatInt(data[1],2) ) )
+        mes.appendChild( document.createTextNode( me.formatInt(data[0],2) ) )
         agno = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Anho')
         agno.appendChild( document.createTextNode( me.formatAgno(data[2]) ) )
 
@@ -202,7 +203,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if( str === 'L03' || str === 'C03') {
             data= me.worksheet[ 'G'+me.rowIndex ].w.split('/');
             mes = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Mes')
-            mes.appendChild( document.createTextNode( me.formatInt(data[1],2) ) )
+            mes.appendChild( document.createTextNode( me.formatInt(data[0],2) ) )
             agno = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Anho')
             agno.appendChild( document.createTextNode( me.formatAgno(data[2]) ) )
 
@@ -215,7 +216,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         data= me.worksheet[ 'D'+me.rowIndex ].w.split('/');
         mes = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Mes')
-        mes.appendChild( document.createTextNode( me.formatInt(data[1],2) ) )
+        mes.appendChild( document.createTextNode( me.formatInt(data[0],2) ) )
         agno = document.createElementNS("http://www.seg-social.es/creta/esquemas/V100/SolicitudCalculos",'Anho')
         agno.appendChild( document.createTextNode( me.formatAgno(data[2]) ) )
 
