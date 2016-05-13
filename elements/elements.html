@@ -20308,9 +20308,9 @@ module.exports = Array.isArray || function (arr) {
               ws[cell_ref] = cell;
 
 
-              var tramoDesde = liq.getElementsByTagName('FechaDesde')[0];
-              var tramoHasta = liq.getElementsByTagName('FechaHasta')[0];
-              var dias = liq.getElementsByTagName('DiasCotizados')[0];
+              var tramoDesde = tramo.getElementsByTagName('FechaDesde')[0];
+              var tramoHasta = tramo.getElementsByTagName('FechaHasta')[0];
+              var dias = tramo.getElementsByTagName('DiasCotizados')[0];
 
               tmp = tramoDesde.getElementsByTagName('Dia')[0].innerHTML+'/'+
                 tramoDesde.getElementsByTagName('Mes')[0].innerHTML+'/'+
@@ -20362,10 +20362,8 @@ module.exports = Array.isArray || function (arr) {
                 }
               }
 
+              this.sheetRange.e.r++;
             }
-
-
-            this.sheetRange.e.r++;
         }
       }
 
