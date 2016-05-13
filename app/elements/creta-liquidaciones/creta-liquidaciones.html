@@ -305,6 +305,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             for( var m=0; m<tramos.length; m++){
               var tramo = tramos[m];
 
+              desde = tramo.getElementsByTagName('FechaDesde')[0];
+              hasta = tramo.getElementsByTagName('FechaHasta')[0];
+
               c = 0;
               cell = {v: this.current.name, t: 's'};
               cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
@@ -330,13 +333,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
               ws[cell_ref] = cell;
 
-              tmp = desde.getElementsByTagName('Mes')[0].innerHTML+'/'+
+              tmp = desde.getElementsByTagName('Dia')[0].innerHTML+'/'+
+                desde.getElementsByTagName('Mes')[0].innerHTML+'/'+
                 desde.getElementsByTagName('Anho')[0].innerHTML;
               cell = {v: tmp, t: 's'};
               cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
               ws[cell_ref] = cell;
 
-              tmp = hasta.getElementsByTagName('Mes')[0].innerHTML+'/'+
+              tmp = hasta.getElementsByTagName('Dia')[0].innerHTML+'/'+
+                hasta.getElementsByTagName('Mes')[0].innerHTML+'/'+
                 hasta.getElementsByTagName('Anho')[0].innerHTML;
               cell = {v: tmp, t: 's'};
               cell_ref = XLSX.utils.encode_cell({c:c++,r:this.sheetRange.e.r});
@@ -429,10 +434,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 }
               }
 
+              this.sheetRange.e.r++;
             }
-
-
-            this.sheetRange.e.r++;
         }
       }
 
